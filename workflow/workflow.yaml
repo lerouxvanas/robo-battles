@@ -1,0 +1,129 @@
+version: 0.1
+
+paths:
+  artifacts_root: workflow/artifacts
+  archived_root: workflow/artifacts/archived
+  global:
+    readme: workflow/artifacts/README.md
+    app_architecture: workflow/artifacts/app-architecture.md
+    coding_standards: workflow/artifacts/coding-standards.md
+    decisions: workflow/artifacts/decisions.md
+    patterns_root: workflow/artifacts/patterns
+  features_root: workflow/artifacts/features
+
+skill_scope:
+  # artifact_only: these skills must NEVER write outside workflow/artifacts/
+  # Source code may be read for context but never edited.
+  # If a fix is discovered, it must be documented in the artifact and the skill must STOP.
+  artifact_only:
+    - xl_bootstrap
+    - xl_init_feature
+    - xl_gather_requirements
+    - xl_plan_implementation
+    - xl_review_plan
+    - xl_update_plan
+    - xl_load_feature             # read-only: no writes at all
+    - xl_write_test_instructions
+    - xl_finalize_feature         # writes to workflow/artifacts/ only (global docs + archive)
+
+  # code_allowed: these skills may write to source files, within the scope lock
+  code_allowed:
+    - xl_implement_plan           # full implementation, scope-locked
+    - xl_code_review              # minor fixes only, explicitly flagged
+    - xl_code_cleanup             # formatting/lint on changed files only
+    - xl_branch_review            # source reads only; edits only when explicitly requested
+
+bootstrap:
+  required_global_artifacts:
+    - workflow/artifacts/README.md
+    - workflow/artifacts/app-architecture.md
+    - workflow/artifacts/coding-standards.md
+    - workflow/artifacts/decisions.md
+    - workflow/artifacts/patterns/README.md
+
+feature:
+  design_principles:
+    - prefer_smallest_viable_change_that_meets_requirements
+    - prefer_existing_local_patterns_before_new_abstractions
+    - require_concrete_justification_for_new_helpers_services_or_frameworks
+  scope_lock:
+    required: true
+    section_name: "Scope Lock"
+    required_items:
+      - in_scope
+      - out_of_scope
+      - allowed_edit_paths
+      - boundary_notes
+  planning_checks:
+    - identify_existing_pattern_to_follow_or_state_none_exists
+    - justify_new_abstractions_with_concrete_current_need
+  review_checks:
+    - solution_complexity_is_proportionate_to_problem
+    - deviations_from_existing_patterns_are_explained
+  required_for_planning:
+    - README.md
+    - requirements.md
+    - implementation-plan.md
+    - status.md
+  required_for_implementation:
+    - plan-review.md
+    - status.md
+  required_for_review:
+    - code-review.md
+    - status.md
+  verification:
+    baseline_before_edits: true
+    build_or_typecheck_after_each_chunk: true
+    stop_after_same_failure_count: 2
+  required_for_finalize:
+    - status.md
+    - decisions.md
+    - README.md
+    - ../README.md
+    - ../../archived/README.md
+
+next_step_rules:
+  - if_missing_any:
+      - workflow/artifacts/README.md
+      - workflow/artifacts/app-architecture.md
+      - workflow/artifacts/coding-standards.md
+      - workflow/artifacts/decisions.md
+      - workflow/artifacts/patterns/README.md
+    suggest: "/xl_bootstrap"
+    why: "Global artifacts are missing; scaffold the baseline before starting features."
+
+  - if: "ticket folder does not exist"
+    suggest: "/xl_init_feature <ticket>"
+    why: "Global artifacts exist; you can start a feature workflow."
+
+  - if: "requirements.md is empty OR Scope Lock section is missing or incomplete"
+    suggest: "/xl_gather_requirements <ticket>"
+    why: "Requirements and scope lock must be defined before planning."
+
+  - if: "implementation-plan.md is empty or only contains template placeholders"
+    suggest: "/xl_plan_implementation <ticket>"
+    why: "An approved implementation plan is required before coding."
+
+  - if: "plan-review.md is missing OR verdict is not Ready"
+    suggest: "/xl_review_plan <ticket>"
+    why: "The plan must be reviewed and marked Ready before implementation begins."
+
+  - if: "implementation is in progress (no code-review.md with verdict)"
+    suggest: "/xl_implement_plan <ticket>"
+    why: "Execute the approved plan task by task."
+
+  - if: "implementation complete but code-review.md has no verdict"
+    suggest: "/xl_code_review <ticket>"
+    why: "Code must be reviewed before cleanup and test instructions."
+
+  - if: "code review passed but cleanup not done"
+    suggest: "/xl_code_cleanup <ticket>"
+    why: "Apply formatting and lint fixes before writing test instructions."
+
+  - if: "test-instructions.md is missing"
+    suggest: "/xl_write_test_instructions <ticket>"
+    why: "Document manual and automated verification steps before finalizing."
+
+  - if: "feature is merged and test instructions exist"
+    suggest: "/xl_finalize_feature <ticket>"
+    why: "Sync global docs and archive the ticket folder after merge."

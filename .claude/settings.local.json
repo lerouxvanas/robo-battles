@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "WebFetch(domain:neo4j.com)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(paste:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(npx eslint:*)",
+      "Bash(PGPASSWORD='pass' psql:*)",
+      "Bash(docker exec:*)",
+      "Bash(brew install:*)",
+      "Bash(wc:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npm run lint:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -60 \"\"\"\"{}\"\"\"\"')",
+      "WebFetch(domain:www.telerik.com)",
+      "WebSearch",
+      "Bash(git log:*)",
+      "Bash(npm info:*)",
+      "Bash(git show:*)",
+      "Bash(git grep:*)",
+      "Bash(npx ng:*)",
+      "Bash(npx karma:*)",
+      "Bash(git checkout:*)",
+      "Bash(python3 -c \"import sys,json; s=json.load\\(sys.stdin\\)[''''scripts'''']; [print\\(k,'''':'''',v\\) for k,v in s.items\\(\\) if any\\(x in k for x in [''''lint'''',''''format'''',''''prettier'''']\\)]\")",
+      "Bash(npm run:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

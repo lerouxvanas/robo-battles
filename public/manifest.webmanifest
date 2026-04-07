@@ -1,0 +1,17 @@
+{
+  "name": "my-app",
+  "short_name": "my-app",
+  "description": "A React Three Fiber playground for experimenting with browser-based 3D scenes.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#101218",
+  "theme_color": "#101218",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
