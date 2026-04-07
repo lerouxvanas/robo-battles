@@ -4,7 +4,7 @@
 |-----------------|----------------------------------------------------|
 | Phase           | Review                                             |
 | Last updated    | 2026-04-07                                         |
-| What I did last | Ran prettier/eslint on changed files               |
+| What I did last | Fixed CI install for vite-plugin-pwa peer deps     |
 | Next action     | Prepare PR / merge                                 |
 
 ## Summary of changes
@@ -24,6 +24,7 @@
 | `src/main.tsx` | Added `registerSW({ immediate: true })` |
 | `tsconfig.app.json` | Added `"vite-plugin-pwa/client"` to `types` array |
 | `README.md` | Replaced Vite template with project info, live URL, PWA install guide |
+| `.npmrc` | Added `legacy-peer-deps=true` so `npm ci` succeeds in CI and local clean installs |
 
 ## How to test
 
@@ -38,6 +39,15 @@
 
 - `vite-plugin-pwa` installed with `--legacy-peer-deps` due to Vite 8 peer dep boundary. Functionally working — revisit if either package is upgraded. Recorded in `decisions.md`.
 - iPhone test requires the deployed GitHub Pages URL (not localhost).
+- GitHub Actions may still show a Node 20 deprecation warning for older action major versions, but that warning is not the cause of the failed build.
+
+## CI install fix
+
+- Root cause: `npm ci` failed with `ERESOLVE` because `vite-plugin-pwa@1.2.0` declares peer support through Vite 7 while the project uses Vite 8.
+- Fix applied: added `.npmrc` with `legacy-peer-deps=true` to make clean installs respect the existing ticket decision automatically.
+- Validation commands:
+	- `npm ci`
+	- `npm run build`
 
 ## Cleanup
 
