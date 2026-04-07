@@ -2,10 +2,10 @@
 
 | Field           | Value                                                          |
 |-----------------|----------------------------------------------------------------|
-| Phase           | Review                                                         |
+| Phase           | Done                                                           |
 | Last updated    | 2026-04-07                                                     |
-| What I did last | Ran cleanup — no changes needed (YAML/Markdown files)          |
-| Next action     | Prepare PR / merge to master                                   |
+| What I did last | Finalized and archived                                         |
+| Merged          | confirmed by developer (2026-04-07)                            |
 
 ## Summary of changes
 
@@ -43,3 +43,8 @@
 - [x] Verified local lint + build pass
 - [x] Code review completed — ✅ Approved (2 optional findings)
 - [x] Code cleanup — nothing to do (YAML/Markdown, no formatter/linter applies)
+
+## Global sync — 2026-04-07
+
+- No global sync changes required.
+- Rationale: Changes are operational refinements to an existing pipeline (branch rename, lint step, concurrency fix, Node 24 opt-in). The deployment pipeline is already documented in `app-architecture.md` from ticket 1.

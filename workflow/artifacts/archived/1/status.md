@@ -1,8 +1,17 @@
 # Status
 
-- Phase: Review
-- Last updated: 2026-03-27
-- What I did last: Completed code review
+- Phase: Done
+- Last updated: 2026-04-07
+- What I did last: Finalized and archived
+- Merged: confirmed by developer (2026-04-07)
+
+## Global sync — 2026-04-07
+
+- `workflow/artifacts/app-architecture.md` updated:
+  - System context: added RTF/Three.js as core 3D stack, GitHub Pages deployment, offline groundwork note
+  - Module layout: replaced Vite starter description with actual current modules
+  - Near-term notes: updated to reflect current state (no more starter shape, test runner gap documented, lazy-load note added)
+- `coding-standards.md`, `decisions.md`, `patterns/`: no updates required — no new cross-feature standards or patterns introduced.
 - Risks/blockers: Automated coverage for the scene still remains limited to lint/build/manual checks. Follow-up recommended: add minimal frontend test tooling and a scene smoke test in a separate ticket.
 - Next action: Run /xl_code_cleanup 1
 
