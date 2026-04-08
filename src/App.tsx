@@ -1,7 +1,7 @@
-import { GameScene } from './features/scene/GameScene'
+import { VoxelEditor } from './features/voxel-editor/VoxelEditor'
 
 function App() {
-  return <GameScene />
+  return <VoxelEditor />
 }
 
 export default App
