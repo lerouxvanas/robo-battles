@@ -100,3 +100,9 @@
 - Plan review flagged requirements/plan synchronization and architecture-path alignment issues before implementation.
 - Requirements and plan are now synchronized, and the planned module path is aligned with the repo's `src/features/<feature>/` guidance.
 - Refreshed plan review marked the ticket ready to implement.
+
+## Global sync
+
+- 2026-04-08
+	- Global docs updated: No global sync changes required.
+	- Rationale: The merged voxel editor adds feature-local functionality only and does not establish a new cross-feature architecture rule, coding standard, reusable pattern, or global decision.

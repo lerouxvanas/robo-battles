@@ -11,6 +11,12 @@ export type Voxel = GridPosition & {
   color: string
 }
 
+export type SavedVoxelModel = {
+  name: string
+  updatedAt: string
+  voxels: Voxel[]
+}
+
 export type CursorPreview = GridPosition | null
 
 export function createVoxelId({ x, y, z }: GridPosition): string {

@@ -79,3 +79,7 @@
 - [x] Updated `README.md`
 - [x] Lint + build verified clean; `dist/sw.js` and `dist/manifest.webmanifest` confirmed present
 - [x] Scoped cleanup completed for lintable changed files
+
+## Global sync
+
+- 2026-04-08 — Updated `workflow/artifacts/app-architecture.md` to replace the outdated "offline deferred" note with the merged PWA/service-worker architecture. No other global sync changes required because the ticket did not introduce a broader coding standard or reusable pattern beyond this architecture correction.

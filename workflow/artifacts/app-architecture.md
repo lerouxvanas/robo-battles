@@ -6,16 +6,20 @@
 - 3D rendering via React Three Fiber (RTF) + Three.js — established as the core rendering stack
 - Client-rendered frontend only — no backend integration
 - Deployed to GitHub Pages via GitHub Actions on push to `master`
-- Offline groundwork present (`public/manifest.webmanifest`) — full offline support deferred to a later ticket
+- PWA support is enabled through `vite-plugin-pwa`, with a generated service worker and manifest for offline shell caching and installability
+
+Sources: workflow/artifacts/archived/3/README.md
 
 ## Current module layout
 
-- `src/main.tsx` - application entry point and root render
+- `src/main.tsx` - application entry point, root render, and service worker registration
 - `src/App.tsx` - top-level screen composition
 - `src/features/scene/GameScene.tsx` - Three.js canvas, camera, lights, and primary 3D object
 - `src/features/scene/GameScene.styles.ts` - styled-components for the scene shell
 - `src/index.css` - minimal global reset only
-- `public/manifest.webmanifest` - web manifest (offline groundwork, not full offline)
+- `vite.config.ts` - Vite base-path handling plus `VitePWA()` configuration for manifest and service worker generation
+
+Sources: workflow/artifacts/archived/3/README.md
 
 ## Target application shape
 
@@ -56,6 +60,8 @@ Suggested direction:
 - A test runner is not configured yet — lint and build are the minimum automated checks until a test runner is added.
 - The 3D scene (`src/features/scene/`) is eagerly loaded from `src/App.tsx`. Consider lazy loading as the app grows.
 - Global CSS is now a minimal reset only. New feature work should use `styled-components` and not expand global selectors.
-- Full offline support (service worker / PWA) is deferred — the web manifest is groundwork only.
+- Offline shell support is now handled by the generated PWA service worker. Future offline work should focus on validating update behavior and any later data-caching needs rather than reintroducing a hand-managed manifest/service-worker path.
+
+Sources: workflow/artifacts/archived/3/README.md
 
 Sources: workflow/artifacts/archived/1/README.md
