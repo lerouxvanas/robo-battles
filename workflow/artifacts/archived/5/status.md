@@ -103,6 +103,12 @@
 - 2026-04-08: User reported the documented browser persistence checks were completed.
 - Reported outcome: no failures were called out for save, overwrite confirmation, load, rename, delete protection, search/filter, autosave restore after refresh, malformed storage recovery, or quota-error visibility.
 
+## Global sync
+
+- 2026-04-08
+	- Global docs updated: No global sync changes required.
+	- Rationale: The merged browser persistence work is feature-local to the voxel editor and does not establish a broader cross-feature architecture rule, coding standard, reusable pattern, or global decision beyond this ticket.
+
 ## How to test
 
 1. Run `npm run dev`.

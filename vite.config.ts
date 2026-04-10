@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -9,6 +10,12 @@ const manifestPath = base
 
 export default defineConfig({
   base,
+  resolve: {
+    alias: {
+      '@mui/styled-engine': '@mui/styled-engine-sc',
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   plugins: [
     react(),
     VitePWA({

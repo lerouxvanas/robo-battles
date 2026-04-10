@@ -1,6 +1,17 @@
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import CloseIcon from '@mui/icons-material/Close'
+import MenuIcon from '@mui/icons-material/Menu'
+import {
+  Box,
+  Button,
+  IconButton,
+  Paper,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+} from '@mui/material'
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { Leva, useControls } from 'leva'
 import { useEffect, useRef, useState } from 'react'
 import styled from 'styled-components'
 
@@ -33,6 +44,7 @@ export function VoxelEditor() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [isActionMenuOpen, setIsActionMenuOpen] = useState(false)
+  const [isDesktopSidebarCollapsed, setIsDesktopSidebarCollapsed] = useState(false)
   const [savedModelName, setSavedModelName] = useState('')
   const [renamingModelName, setRenamingModelName] = useState<string | null>(null)
   const [renameDraftName, setRenameDraftName] = useState('')
@@ -43,7 +55,6 @@ export function VoxelEditor() {
   const savedModels = useVoxelStore((state) => state.savedModels)
   const activeSavedModelName = useVoxelStore((state) => state.activeSavedModelName)
   const savedModelsSearch = useVoxelStore((state) => state.savedModelsSearch)
-  const isSavedModelsPanelOpen = useVoxelStore((state) => state.isSavedModelsPanelOpen)
   const persistenceLoaded = useVoxelStore((state) => state.persistenceLoaded)
   const persistenceError = useVoxelStore((state) => state.persistenceError)
   const selectedTool = useVoxelStore((state) => state.selectedTool)
@@ -64,7 +75,6 @@ export function VoxelEditor() {
   const renameSavedModel = useVoxelStore((state) => state.renameSavedModel)
   const deleteSavedModel = useVoxelStore((state) => state.deleteSavedModel)
   const setSavedModelsSearch = useVoxelStore((state) => state.setSavedModelsSearch)
-  const toggleSavedModelsPanel = useVoxelStore((state) => state.toggleSavedModelsPanel)
   const upsertVoxel = useVoxelStore((state) => state.upsertVoxel)
   const removeVoxel = useVoxelStore((state) => state.removeVoxel)
   const clearVoxels = useVoxelStore((state) => state.clearVoxels)
@@ -72,29 +82,6 @@ export function VoxelEditor() {
   const redo = useVoxelStore((state) => state.redo)
   const toJSON = useVoxelStore((state) => state.toJSON)
   const loadJSON = useVoxelStore((state) => state.loadJSON)
-
-  const controls = useControls('Voxel Controls', {
-    tool: {
-      value: selectedTool,
-      options: { Place: 'place', Remove: 'remove' },
-    },
-    color: {
-      value: selectedColor,
-      label: 'Voxel color',
-    },
-  }) as { tool: VoxelTool; color: string }
-
-  useEffect(() => {
-    if (controls.tool !== selectedTool) {
-      setTool(controls.tool)
-    }
-  }, [controls.tool, selectedTool, setTool])
-
-  useEffect(() => {
-    if (controls.color !== selectedColor) {
-      setColor(controls.color)
-    }
-  }, [controls.color, selectedColor, setColor])
 
   useEffect(() => {
     initializePersistence()
@@ -272,33 +259,45 @@ export function VoxelEditor() {
     }
   }
 
+  const handleClearScene = () => {
+    clearVoxels()
+    clearCursorPreview()
+    clearLoadError()
+    clearPersistenceError()
+    setSavedModelName('')
+    setRenamingModelName(null)
+    setRenameDraftName('')
+    setStatusMessage('Cleared the current voxel scene.')
+  }
+
+  const handleToolSelect = (tool: VoxelTool) => {
+    if (tool !== selectedTool) {
+      setTool(tool)
+    }
+  }
+
+  const toggleDesktopSidebar = () => {
+    setIsDesktopSidebarCollapsed((value) => !value)
+  }
+
+  const sceneModeLabel = selectedTool === 'place' ? 'Place voxels' : 'Remove voxels'
+  const savedStateLabel = activeSavedModelName ?? 'Autosaved draft'
+
   return (
     <EditorShell>
-      <Leva collapsed={false} oneLineLabels hideCopyButton />
-
-      <HeaderCard>
-        <SummaryGrid>
-          <SummaryCard>
-            <span>Mode</span>
-            <strong>{selectedTool === 'place' ? 'Place voxels' : 'Remove voxels'}</strong>
-          </SummaryCard>
-          <SummaryCard>
-            <span>Scene size</span>
-            <strong>{voxels.length} voxel{voxels.length === 1 ? '' : 's'}</strong>
-          </SummaryCard>
-          <SummaryCard>
-            <span>Selected color</span>
-            <ColorSwatch style={{ backgroundColor: selectedColor }} />
-          </SummaryCard>
-          <SummaryCard>
-            <span>Saved state</span>
-            <strong>{activeSavedModelName ?? 'Autosaved draft'}</strong>
-          </SummaryCard>
-        </SummaryGrid>
-      </HeaderCard>
-
-      <ContentGrid $panelOpen={isSavedModelsPanelOpen}>
+      <ContentGrid $desktopCollapsed={isDesktopSidebarCollapsed}>
         <CanvasCard>
+          <DesktopSidebarTrigger
+            variant="outlined"
+            type="button"
+            onClick={toggleDesktopSidebar}
+            aria-label={isDesktopSidebarCollapsed ? 'Show editor sidebar' : 'Hide editor sidebar'}
+            aria-expanded={!isDesktopSidebarCollapsed}
+            startIcon={<MenuIcon fontSize="small" />}
+          >
+            {isDesktopSidebarCollapsed ? 'Open sidebar' : 'Collapse sidebar'}
+          </DesktopSidebarTrigger>
+
           <CanvasFrame>
             <Canvas camera={{ position: [8, 8, 10], fov: 45 }} shadows>
               <color attach="background" args={['#0a1118']} />
@@ -347,12 +346,10 @@ export function VoxelEditor() {
         <ActionMenuToggle
           type="button"
           onClick={() => setIsActionMenuOpen((value) => !value)}
-          aria-label={isActionMenuOpen ? 'Hide action menu' : 'Show action menu'}
+          aria-label={isActionMenuOpen ? 'Hide editor sidebar' : 'Show editor sidebar'}
           aria-expanded={isActionMenuOpen}
         >
-          <MenuIcon aria-hidden="true" viewBox="0 0 24 24" focusable="false">
-            <path d="M4 7h16M4 12h16M4 17h16" />
-          </MenuIcon>
+          <MenuIcon fontSize="small" />
         </ActionMenuToggle>
 
         <ActionMenuBackdrop
@@ -361,76 +358,257 @@ export function VoxelEditor() {
           aria-hidden={!isActionMenuOpen}
         />
 
-        <SidebarCard $open={isActionMenuOpen}>
-          <ActionMenuHeader>
-            <SectionTitle>Actions</SectionTitle>
-            <CollapseButton type="button" onClick={() => setIsActionMenuOpen(false)}>
-              Close
-            </CollapseButton>
-          </ActionMenuHeader>
+        <SidebarCard $desktopCollapsed={isDesktopSidebarCollapsed} $open={isActionMenuOpen}>
+          <SidebarHeader>
+            <Box>
+              <SidebarEyebrow>Voxel editor</SidebarEyebrow>
+              <SidebarTitle>Editor sidebar</SidebarTitle>
+            </Box>
+            <SidebarHeaderActions>
+              <DesktopHeaderButton
+                variant="text"
+                type="button"
+                onClick={toggleDesktopSidebar}
+                startIcon={<ChevronLeftIcon fontSize="small" />}
+              >
+                Collapse
+              </DesktopHeaderButton>
+              <CollapseButton type="button" onClick={() => setIsActionMenuOpen(false)}>
+                <CloseIcon fontSize="small" />
+              </CollapseButton>
+            </SidebarHeaderActions>
+          </SidebarHeader>
 
-          <PanelToggleButton type="button" onClick={toggleSavedModelsPanel}>
-            {isSavedModelsPanelOpen ? 'Hide saved models panel' : 'Show saved models panel'}
-          </PanelToggleButton>
+          <SidebarScrollArea>
+            <SidebarSection>
+              <SectionTitle>Current scene</SectionTitle>
+              <SceneFacts>
+                <SceneFact>
+                  <span>Mode</span>
+                  <strong>{sceneModeLabel}</strong>
+                </SceneFact>
+                <SceneFact>
+                  <span>Scene size</span>
+                  <strong>
+                    {voxels.length} voxel{voxels.length === 1 ? '' : 's'}
+                  </strong>
+                </SceneFact>
+                <SceneFact>
+                  <span>Saved state</span>
+                  <strong>{savedStateLabel}</strong>
+                </SceneFact>
+              </SceneFacts>
+            </SidebarSection>
 
-          <ActionGroup>
-            <ActionButton type="button" onClick={handleSaveJson}>
-              Save JSON
-            </ActionButton>
-            <ActionButton type="button" onClick={() => fileInputRef.current?.click()}>
-              Load JSON
-            </ActionButton>
-            <ActionButton type="button" onClick={handleExportGlb}>
-              Export GLB
-            </ActionButton>
-            <SecondaryButton
-              type="button"
-              onClick={() => {
-                undo()
-                setStatusMessage('Undid the last voxel change.')
-              }}
-              disabled={!canUndo}
-            >
-              Undo
-            </SecondaryButton>
-            <SecondaryButton
-              type="button"
-              onClick={() => {
-                redo()
-                setStatusMessage('Redid the last voxel change.')
-              }}
-              disabled={!canRedo}
-            >
-              Redo
-            </SecondaryButton>
-            <SecondaryButton
-              type="button"
-              onClick={() => {
-                clearVoxels()
-                clearCursorPreview()
-                clearLoadError()
-                clearPersistenceError()
-                setSavedModelName('')
-                setRenamingModelName(null)
-                setRenameDraftName('')
-                setStatusMessage('Cleared the current voxel scene.')
-              }}
-            >
-              Clear scene
-            </SecondaryButton>
-          </ActionGroup>
+            <SidebarSection>
+              <SectionTitle>Editing</SectionTitle>
+              <ToolToggleGroup
+                exclusive
+                value={selectedTool}
+                onChange={(_, value: VoxelTool | null) => {
+                  if (value !== null) {
+                    handleToolSelect(value)
+                  }
+                }}
+              >
+                <ToolToggleButton value="place">Place</ToolToggleButton>
+                <ToolToggleButton value="remove">Remove</ToolToggleButton>
+              </ToolToggleGroup>
 
-          <InfoList>
-            <li>Ground clicks place voxels on the y=0 layer.</li>
-            <li>Face clicks add the next voxel on the selected face normal.</li>
-            <li>Orbit with drag; placement happens on click only.</li>
-            <li>Invalid JSON keeps the current scene intact and shows an in-app error.</li>
-            <li>Browser saves keep named models separate from the autosaved draft.</li>
-          </InfoList>
+              <FieldRow>
+                <FieldLabel>Voxel color</FieldLabel>
+                <ColorField>
+                  <ColorInput
+                    aria-label="Voxel color"
+                    type="color"
+                    value={selectedColor}
+                    onChange={(event) => setColor(event.target.value)}
+                  />
+                  <TextInput
+                    size="small"
+                    fullWidth
+                    value={selectedColor}
+                    slotProps={{ input: { readOnly: true } }}
+                  />
+                  <ColorSwatch style={{ backgroundColor: selectedColor }} />
+                </ColorField>
+              </FieldRow>
+            </SidebarSection>
 
-          {statusMessage !== null ? <NoticeBanner aria-live="polite">{statusMessage}</NoticeBanner> : null}
-          {persistenceError !== null ? <ErrorBanner aria-live="polite">{persistenceError}</ErrorBanner> : null}
-          {loadError !== null ? <ErrorBanner aria-live="polite">{loadError}</ErrorBanner> : null}
+            <SidebarSection>
+              <SectionTitle>Actions</SectionTitle>
+              <ActionGroup>
+                <ActionButton variant="contained" type="button" onClick={handleSaveJson}>
+                  Save JSON
+                </ActionButton>
+                <ActionButton variant="contained" type="button" onClick={() => fileInputRef.current?.click()}>
+                  Load JSON
+                </ActionButton>
+                <ActionButton variant="contained" type="button" onClick={handleExportGlb}>
+                  Export GLB
+                </ActionButton>
+                <SecondaryButton
+                  variant="outlined"
+                  type="button"
+                  onClick={() => {
+                    undo()
+                    setStatusMessage('Undid the last voxel change.')
+                  }}
+                  disabled={!canUndo}
+                >
+                  Undo
+                </SecondaryButton>
+                <SecondaryButton
+                  variant="outlined"
+                  type="button"
+                  onClick={() => {
+                    redo()
+                    setStatusMessage('Redid the last voxel change.')
+                  }}
+                  disabled={!canRedo}
+                >
+                  Redo
+                </SecondaryButton>
+                <SecondaryButton variant="outlined" type="button" onClick={handleClearScene}>
+                  Clear scene
+                </SecondaryButton>
+              </ActionGroup>
+            </SidebarSection>
+
+            <SidebarSection>
+              <SectionHeader>
+                <SectionTitle>Saved models</SectionTitle>
+              </SectionHeader>
+
+              <SavedModelsPanel>
+                <FieldRow>
+                  <FieldLabel>Model name</FieldLabel>
+                  <TextInput
+                    id="saved-model-name"
+                    size="small"
+                    fullWidth
+                    type="text"
+                    value={savedModelName}
+                    placeholder="castle-gate"
+                    onChange={(event) => setSavedModelName(event.target.value)}
+                  />
+                </FieldRow>
+
+                <SecondaryButton variant="outlined" type="button" onClick={() => handleSaveNamedModel()}>
+                  Save model to browser
+                </SecondaryButton>
+
+                <FieldRow>
+                  <FieldLabel>Search saved models</FieldLabel>
+                  <TextInput
+                    id="saved-model-search"
+                    size="small"
+                    fullWidth
+                    type="search"
+                    value={savedModelsSearch}
+                    placeholder="Search by model name"
+                    onChange={(event) => setSavedModelsSearch(event.target.value)}
+                  />
+                </FieldRow>
+
+                {!persistenceLoaded ? <MutedText>Loading browser saves...</MutedText> : null}
+
+                {persistenceLoaded && filteredSavedModels.length === 0 ? (
+                  <EmptyState>
+                    {savedModels.length === 0
+                      ? 'No saved models yet. Save the current scene to start a browser library.'
+                      : 'No saved models match the current search.'}
+                  </EmptyState>
+                ) : null}
+
+                {filteredSavedModels.length > 0 ? (
+                  <SavedModelsList>
+                    {filteredSavedModels.map((model) => {
+                      const isRenaming = renamingModelName === model.name
+                      const isActiveModel = activeSavedModelName === model.name
+
+                      return (
+                        <SavedModelItem key={model.name} $active={isActiveModel}>
+                          <SavedModelHeader>
+                            <SavedModelTitle>{model.name}</SavedModelTitle>
+                            <SavedModelMeta>
+                              {new Date(model.updatedAt).toLocaleString()}
+                            </SavedModelMeta>
+                          </SavedModelHeader>
+
+                          <SavedModelMeta>
+                            {model.voxels.length} voxel{model.voxels.length === 1 ? '' : 's'}
+                            {isActiveModel ? ' · active' : ''}
+                          </SavedModelMeta>
+
+                          {isRenaming ? (
+                            <InlineEditor>
+                              <TextInput
+                                size="small"
+                                fullWidth
+                                type="text"
+                                value={renameDraftName}
+                                onChange={(event) => setRenameDraftName(event.target.value)}
+                              />
+                              <InlineActions>
+                                <SmallButton variant="contained" type="button" onClick={() => handleRenameSavedModel(model.name)}>
+                                  Save name
+                                </SmallButton>
+                                <GhostButton
+                                  variant="outlined"
+                                  type="button"
+                                  onClick={() => {
+                                    setRenamingModelName(null)
+                                    setRenameDraftName('')
+                                  }}
+                                >
+                                  Cancel
+                                </GhostButton>
+                              </InlineActions>
+                            </InlineEditor>
+                          ) : (
+                            <InlineActions>
+                              <SmallButton variant="contained" type="button" onClick={() => handleLoadSavedModel(model.name)}>
+                                Load
+                              </SmallButton>
+                              <GhostButton
+                                variant="outlined"
+                                type="button"
+                                onClick={() => {
+                                  setRenamingModelName(model.name)
+                                  setRenameDraftName(model.name)
+                                }}
+                              >
+                                Rename
+                              </GhostButton>
+                              <GhostButton variant="outlined" type="button" onClick={() => handleDeleteSavedModel(model.name)}>
+                                Delete
+                              </GhostButton>
+                            </InlineActions>
+                          )}
+                        </SavedModelItem>
+                      )
+                    })}
+                  </SavedModelsList>
+                ) : null}
+              </SavedModelsPanel>
+            </SidebarSection>
+
+            <SidebarSection>
+              <SectionTitle>Usage notes</SectionTitle>
+              <InfoList>
+                <li>Ground clicks place voxels on the y=0 layer.</li>
+                <li>Face clicks add the next voxel on the selected face normal.</li>
+                <li>Orbit with drag; placement happens on click only.</li>
+                <li>Invalid JSON keeps the current scene intact and shows an in-app error.</li>
+                <li>Browser saves keep named models separate from the autosaved draft.</li>
+              </InfoList>
+            </SidebarSection>
+
+            {statusMessage !== null ? <NoticeBanner aria-live="polite">{statusMessage}</NoticeBanner> : null}
+            {persistenceError !== null ? <ErrorBanner aria-live="polite">{persistenceError}</ErrorBanner> : null}
+            {loadError !== null ? <ErrorBanner aria-live="polite">{loadError}</ErrorBanner> : null}
+          </SidebarScrollArea>
 
           <HiddenInput
             ref={fileInputRef}
@@ -439,131 +617,6 @@ export function VoxelEditor() {
             onChange={handleLoadFile}
           />
         </SidebarCard>
-
-        <PushPanel $open={isSavedModelsPanelOpen} aria-hidden={!isSavedModelsPanelOpen}>
-          <PushPanelInner>
-            <SectionHeader>
-              <SectionTitle>Saved models</SectionTitle>
-              <CollapseButton type="button" onClick={toggleSavedModelsPanel}>
-                Close
-              </CollapseButton>
-            </SectionHeader>
-
-            <SavedModelsPanel>
-              <FieldRow>
-                <FieldLabel>Model name</FieldLabel>
-                <TextInput
-                  id="saved-model-name"
-                  type="text"
-                  value={savedModelName}
-                  placeholder="castle-gate"
-                  onChange={(event) => setSavedModelName(event.target.value)}
-                />
-              </FieldRow>
-
-              <SecondaryButton type="button" onClick={() => handleSaveNamedModel()}>
-                Save model to browser
-              </SecondaryButton>
-
-              <FieldRow>
-                <FieldLabel>Search saved models</FieldLabel>
-                <TextInput
-                  id="saved-model-search"
-                  type="search"
-                  value={savedModelsSearch}
-                  placeholder="Search by model name"
-                  onChange={(event) => setSavedModelsSearch(event.target.value)}
-                />
-              </FieldRow>
-
-              {!persistenceLoaded ? <MutedText>Loading browser saves...</MutedText> : null}
-
-              {persistenceLoaded && filteredSavedModels.length === 0 ? (
-                <EmptyState>
-                  {savedModels.length === 0
-                    ? 'No saved models yet. Save the current scene to start a browser library.'
-                    : 'No saved models match the current search.'}
-                </EmptyState>
-              ) : null}
-
-              {filteredSavedModels.length > 0 ? (
-                <SavedModelsList>
-                  {filteredSavedModels.map((model) => {
-                    const isRenaming = renamingModelName === model.name
-                    const isActiveModel = activeSavedModelName === model.name
-
-                    return (
-                      <SavedModelItem key={model.name} $active={isActiveModel}>
-                        <SavedModelHeader>
-                          <SavedModelTitle>{model.name}</SavedModelTitle>
-                          <SavedModelMeta>
-                            {new Date(model.updatedAt).toLocaleString()}
-                          </SavedModelMeta>
-                        </SavedModelHeader>
-
-                        <SavedModelMeta>
-                          {model.voxels.length} voxel{model.voxels.length === 1 ? '' : 's'}
-                          {isActiveModel ? ' · active' : ''}
-                        </SavedModelMeta>
-
-                        {isRenaming ? (
-                          <InlineEditor>
-                            <TextInput
-                              type="text"
-                              value={renameDraftName}
-                              onChange={(event) => setRenameDraftName(event.target.value)}
-                            />
-                            <InlineActions>
-                              <SmallButton
-                                type="button"
-                                onClick={() => handleRenameSavedModel(model.name)}
-                              >
-                                Save name
-                              </SmallButton>
-                              <GhostButton
-                                type="button"
-                                onClick={() => {
-                                  setRenamingModelName(null)
-                                  setRenameDraftName('')
-                                }}
-                              >
-                                Cancel
-                              </GhostButton>
-                            </InlineActions>
-                          </InlineEditor>
-                        ) : (
-                          <InlineActions>
-                            <SmallButton
-                              type="button"
-                              onClick={() => handleLoadSavedModel(model.name)}
-                            >
-                              Load
-                            </SmallButton>
-                            <GhostButton
-                              type="button"
-                              onClick={() => {
-                                setRenamingModelName(model.name)
-                                setRenameDraftName(model.name)
-                              }}
-                            >
-                              Rename
-                            </GhostButton>
-                            <GhostButton
-                              type="button"
-                              onClick={() => handleDeleteSavedModel(model.name)}
-                            >
-                              Delete
-                            </GhostButton>
-                          </InlineActions>
-                        )}
-                      </SavedModelItem>
-                    )
-                  })}
-                </SavedModelsList>
-              ) : null}
-            </SavedModelsPanel>
-          </PushPanelInner>
-        </PushPanel>
       </ContentGrid>
     </EditorShell>
   )
@@ -572,7 +625,6 @@ export function VoxelEditor() {
 const EditorShell = styled.main`
   height: 100dvh;
   display: flex;
-  flex-direction: column;
   overflow: hidden;
   padding: 16px 20px 20px;
   background:
@@ -586,79 +638,57 @@ const EditorShell = styled.main`
   }
 `
 
-const HeaderCard = styled.section`
-  display: grid;
-  gap: 14px;
-  width: 100%;
-  margin: 0 0 14px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  background: rgba(10, 15, 23, 0.78);
-  backdrop-filter: blur(14px);
-`
-
-const SummaryGrid = styled.div`
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-`
-
-const SummaryCard = styled.div`
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-
-  span {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #90a1b6;
-  }
-
-  strong {
-    font-size: 0.94rem;
-    font-weight: 700;
-  }
-`
-
 const ColorSwatch = styled.span`
   display: inline-flex;
-  width: 100%;
-  min-height: 28px;
-  border-radius: 999px;
+  width: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.16);
 `
 
-const ContentGrid = styled.section<{ $panelOpen: boolean }>`
+const ContentGrid = styled.section<{ $desktopCollapsed: boolean }>`
   display: grid;
   flex: 1;
   gap: 16px;
   min-height: 0;
   width: 100%;
+  grid-template-columns: minmax(0, 1fr);
 
   @media (min-width: 1080px) {
     align-items: stretch;
-  }
-
-  @media (min-width: 1080px) {
     grid-template-columns:
-      minmax(0, 1.6fr)
-      minmax(320px, 0.7fr)
-      ${({ $panelOpen }) => ($panelOpen ? 'minmax(340px, 0.9fr)' : '0px')};
+      minmax(0, 1fr)
+      ${({ $desktopCollapsed }) =>
+        $desktopCollapsed ? '0px' : 'minmax(320px, 360px)'};
     transition: grid-template-columns 220ms ease;
   }
 `
 
 const CanvasCard = styled.section`
+  position: relative;
   min-width: 0;
   display: flex;
+  min-height: 0;
 `
 
-const ActionMenuToggle = styled.button`
+const DesktopSidebarTrigger = styled(Button)`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  background: rgba(10, 15, 23, 0.88);
+  color: #eff4fb;
+
+  @media (min-width: 1080px) {
+    display: inline-flex;
+  }
+`
+
+const ActionMenuToggle = styled(IconButton)`
   position: fixed;
   right: 14px;
   bottom: 14px;
@@ -669,24 +699,14 @@ const ActionMenuToggle = styled.button`
   width: 52px;
   height: 52px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 50%;
+  border-radius: 0;
   background: rgba(10, 15, 23, 0.92);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
   color: #eff4fb;
-  cursor: pointer;
 
   @media (min-width: 1080px) {
     display: none;
   }
-`
-
-const MenuIcon = styled.svg`
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
-  stroke-linecap: round;
 `
 
 const ActionMenuBackdrop = styled.button<{ $open: boolean }>`
@@ -706,9 +726,10 @@ const ActionMenuBackdrop = styled.button<{ $open: boolean }>`
 
 const CanvasFrame = styled.div`
   flex: 1;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 15, 23, 0.82);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
@@ -722,16 +743,17 @@ const CanvasFrame = styled.div`
   }
 `
 
-const SidebarCard = styled.aside<{ $open: boolean }>`
-  display: grid;
-  gap: 16px;
-  align-content: start;
-  padding: 20px;
-  border-radius: 24px;
+const SidebarCard = styled(Paper)<{ $desktopCollapsed: boolean; $open: boolean }>`
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(10, 15, 23, 0.78);
   backdrop-filter: blur(14px);
-  overflow: auto;
+  overflow: hidden;
 
   @media (max-width: 1079px) {
     position: fixed;
@@ -749,69 +771,123 @@ const SidebarCard = styled.aside<{ $open: boolean }>`
 
   @media (min-width: 1080px) {
     position: static;
+    max-height: none;
+    opacity: ${({ $desktopCollapsed }) => ($desktopCollapsed ? 0 : 1)};
+    overflow: hidden;
+    pointer-events: ${({ $desktopCollapsed }) => ($desktopCollapsed ? 'none' : 'auto')};
+    transform: translateX(${({ $desktopCollapsed }) => ($desktopCollapsed ? '24px' : '0')});
+    transition: opacity 220ms ease, transform 220ms ease;
   }
 `
 
-const ActionMenuHeader = styled.div`
+const SidebarHeader = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-
-  @media (min-width: 1080px) {
-    display: none;
-  }
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `
 
-const PushPanel = styled.aside<{ $open: boolean }>`
-  min-width: 0;
-
-  @media (max-width: 1079px) {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 30;
-    width: min(92vw, 380px);
-    pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
-    transform: translateX(${({ $open }) => ($open ? '0%' : '102%')});
-    transition: transform 220ms ease;
-  }
-
-  @media (min-width: 1080px) {
-    overflow: hidden;
-    opacity: ${({ $open }) => ($open ? 1 : 0)};
-    transform: translateX(${({ $open }) => ($open ? '0' : '24px')});
-    transition: opacity 220ms ease, transform 220ms ease;
-    pointer-events: ${({ $open }) => ($open ? 'auto' : 'none')};
-  }
+const SidebarHeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `
 
-const PushPanelInner = styled.div`
+const SidebarEyebrow = styled.p`
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9fb1c8;
+`
+
+const SidebarTitle = styled.h1`
+  margin: 0;
+  font-size: 1.4rem;
+`
+
+const SidebarScrollArea = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 20px 20px;
+`
+
+const SidebarSection = styled.section`
   display: grid;
-  gap: 14px;
-  height: 100%;
-  padding: 20px;
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(10, 15, 23, 0.92);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.34);
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 
-  @media (max-width: 1079px) {
-    border-radius: 24px 0 0 24px;
+  &:first-of-type {
+    padding-top: 0;
+    border-top: 0;
   }
 `
 
-const PanelToggleButton = styled.button`
+const SceneFacts = styled.div`
+  display: grid;
+  gap: 10px;
+`
+
+const SceneFact = styled.div`
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+
+  span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #90a1b6;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+`
+
+const ToolToggleGroup = styled(ToggleButtonGroup)`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  .MuiToggleButtonGroup-grouped {
+    margin: 0;
+    border-radius: 0;
+  }
+`
+
+const ToolToggleButton = styled(ToggleButton)`
   min-height: 44px;
-  border-radius: 12px;
-  padding: 0 14px;
-  font: inherit;
-  font-weight: 700;
   color: #eff4fb;
-  background: rgba(255, 255, 255, 0.07);
+
+  &.Mui-selected {
+    color: #ffe5bf;
+    background: rgba(245, 159, 69, 0.16);
+  }
+`
+
+const ColorField = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
+
+const ColorInput = styled.input`
+  width: 56px;
+  height: 40px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
 `
 
@@ -827,13 +903,21 @@ const SectionTitle = styled.h2`
   font-size: 1rem;
 `
 
-const CollapseButton = styled.button`
-  border: 0;
-  background: transparent;
+const CollapseButton = styled(IconButton)`
   color: #9fb1c8;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+
+  @media (min-width: 1080px) {
+    display: none;
+  }
+`
+
+const DesktopHeaderButton = styled(Button)`
+  display: none;
+  color: #9fb1c8;
+
+  @media (min-width: 1080px) {
+    display: inline-flex;
+  }
 `
 
 const SavedModelsPanel = styled.div`
@@ -851,17 +935,9 @@ const FieldLabel = styled.span`
   color: #c8d4e4;
 `
 
-const TextInput = styled.input`
-  min-height: 44px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0 14px;
-  font: inherit;
-  color: #eff4fb;
-  background: rgba(255, 255, 255, 0.05);
-
-  &::placeholder {
-    color: #7f90a6;
+const TextInput = styled(TextField)`
+  .MuiOutlinedInput-root {
+    background: rgba(255, 255, 255, 0.05);
   }
 `
 
@@ -874,7 +950,7 @@ const MutedText = styled.p`
 const EmptyState = styled.p`
   margin: 0;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: 0;
   color: #b8c3d6;
   background: rgba(255, 255, 255, 0.04);
   border: 1px dashed rgba(255, 255, 255, 0.12);
@@ -891,7 +967,7 @@ const SavedModelItem = styled.article<{ $active: boolean }>`
   display: grid;
   gap: 10px;
   padding: 14px;
-  border-radius: 16px;
+  border-radius: 0;
   background: ${({ $active }) =>
     $active ? 'rgba(245, 159, 69, 0.14)' : 'rgba(255, 255, 255, 0.04)'};
   border: 1px solid
@@ -925,45 +1001,32 @@ const InlineActions = styled.div`
   gap: 8px;
 `
 
-const SmallButton = styled.button`
+const SmallButton = styled(Button)`
   min-height: 36px;
-  border: 0;
-  border-radius: 12px;
-  padding: 0 12px;
-  font: inherit;
-  font-weight: 700;
   color: #081018;
   background: linear-gradient(135deg, #f59f45 0%, #ffce72 100%);
-  cursor: pointer;
 `
 
-const GhostButton = styled.button`
+const GhostButton = styled(Button)`
   min-height: 36px;
-  border-radius: 12px;
-  padding: 0 12px;
-  font: inherit;
-  font-weight: 700;
   color: #eff4fb;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
 `
 
 const ActionGroup = styled.div`
   display: grid;
   gap: 12px;
+
+  @media (min-width: 720px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 `
 
-const ActionButton = styled.button`
+const ActionButton = styled(Button)`
   min-height: 48px;
-  border: 0;
-  border-radius: 14px;
-  padding: 0 16px;
-  font: inherit;
-  font-weight: 700;
   color: #081018;
   background: linear-gradient(135deg, #f59f45 0%, #ffce72 100%);
-  cursor: pointer;
 `
 
 const SecondaryButton = styled(ActionButton)`
@@ -971,9 +1034,9 @@ const SecondaryButton = styled(ActionButton)`
   background: rgba(255, 255, 255, 0.07);
   border: 1px solid rgba(255, 255, 255, 0.12);
 
-  &:disabled {
-    cursor: not-allowed;
+  &.Mui-disabled {
     opacity: 0.45;
+    color: rgba(239, 244, 251, 0.52);
   }
 `
 
@@ -987,7 +1050,7 @@ const InfoList = styled.ul`
 const NoticeBanner = styled.p`
   margin: 0;
   padding: 14px 16px;
-  border-radius: 16px;
+  border-radius: 0;
   color: #ffe5bf;
   background: rgba(245, 159, 69, 0.14);
   border: 1px solid rgba(245, 159, 69, 0.28);
@@ -996,7 +1059,7 @@ const NoticeBanner = styled.p`
 const ErrorBanner = styled.p`
   margin: 0;
   padding: 14px 16px;
-  border-radius: 16px;
+  border-radius: 0;
   color: #ffd5d1;
   background: rgba(198, 49, 49, 0.16);
   border: 1px solid rgba(198, 49, 49, 0.34);

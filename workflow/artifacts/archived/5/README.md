@@ -11,4 +11,4 @@
 
 ## Summary
 
-Summary pending. Capture the problem, user value, and expected outcome once requirements are gathered.
+Browser-only voxel-model persistence with named saves, search, rename/delete management, autosaved draft restore on refresh, and a responsive saved-model side panel inside the voxel editor.
